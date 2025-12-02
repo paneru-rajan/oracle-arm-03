@@ -1,5 +1,5 @@
 from typing import Dict
-from pydantic import BaseModel, model_validator, SecretStr
+from pydantic import BaseModel, model_validator, SecretStr, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class ModelConfig(BaseModel):
@@ -15,14 +15,14 @@ class ModelConfig(BaseModel):
 
 class Settings(BaseSettings):
     default_model_type: str = "qwen"
-    api_key: SecretStr
+    api_key: SecretStr = Field(alias="API_KEY")
     
     models: Dict[str, ModelConfig] = {
         "qwen": ModelConfig(
             repo_id="Qwen/Qwen3-Embedding-0.6B",
             query_instruction_template="Instruct: {task}\nQuery: ",
             max_seq_length=1024,
-            trust_remote_code=False
+            trust_remote_code=True
         ),
         "gemma": ModelConfig(
             repo_id="tencent/KaLM-Embedding-Gemma3-12B-2511",
