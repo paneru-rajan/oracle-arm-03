@@ -22,7 +22,7 @@ class Settings(BaseSettings):
             repo_id="Qwen/Qwen3-Embedding-0.6B",
             query_instruction_template="Instruct: {task}\nQuery: ",
             max_seq_length=1024,
-            trust_remote_code=True
+            trust_remote_code=False
         ),
         "gemma": ModelConfig(
             repo_id="tencent/KaLM-Embedding-Gemma3-12B-2511",
