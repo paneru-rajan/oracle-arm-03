@@ -9,7 +9,6 @@ class ModelConfig(BaseModel):
     trust_remote_code: bool = False
     # Template for the prompt argument. 
     # The sentence-transformer will prepend this string to the input text.
-    # So if template is "Instruct: {task}\nQuery: ", the input becomes "Instruct: {task}\nQuery: {text}"
     query_instruction_template: str 
     default_task: str = "Given a web search query, retrieve relevant passages that answer the query"
 
@@ -23,12 +22,6 @@ class Settings(BaseSettings):
             query_instruction_template="Instruct: {task}\nQuery: ",
             max_seq_length=1024,
             trust_remote_code=False
-        ),
-        "gemma": ModelConfig(
-            repo_id="tencent/KaLM-Embedding-Gemma3-12B-2511",
-            query_instruction_template="Instruct: {task}\nQuery: ",
-            max_seq_length=1024,
-            trust_remote_code=True
         )
     }
 

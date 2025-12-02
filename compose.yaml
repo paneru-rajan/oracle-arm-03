@@ -4,6 +4,7 @@ services:
     ports:
       - "${PORT}:8000"
     volumes:
+      - .:/app
       - hf_cache:/root/.cache/huggingface
     env_file:
       - .env
