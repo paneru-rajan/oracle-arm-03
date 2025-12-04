@@ -32,3 +32,13 @@ newgrp docker
 # Verify installation by running a test container
 docker run --rm hello-world
 ```
+
+```shell
+POST http://localhost:9200/_security/user/kibana_system/_password
+Authorization: Basic elastic changeme
+Content-Type: application/json
+
+{
+  "password": "changeme"
+}
+```
