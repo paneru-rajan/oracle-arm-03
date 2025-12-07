@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 class BaseVectorStore(ABC):
     def __init__(self, index_name: str):
         self.index_name = index_name
+        logger.info(f"Connecting to Elasticsearch at {settings.es_host}")
         self.client = AsyncElasticsearch(
             settings.es_host,
-            basic_auth=(settings.es_username, settings.es_password),
-            verify_certs=False
+            basic_auth=(settings.es_username, settings.es_password)
         )
 
     async def close(self):
