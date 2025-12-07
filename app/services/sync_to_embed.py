@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 
 import asyncpg
@@ -61,7 +61,8 @@ async def sync_chat_data():
     try:
         last_ts_ms = await chat_store.get_latest_timestamp()
         # Convert to UTC aware then strip tzinfo to match Postgres timestamp without time zone
-        last_sync_dt = datetime.fromtimestamp(last_ts_ms / 1000.0, tz=timezone.utc).replace(tzinfo=None)
+        # Add 1ms to handle potential precision loss (ES stores millis, PG stores micros) which causes infinite sync of last record
+        last_sync_dt = (datetime.fromtimestamp(last_ts_ms / 1000.0, tz=timezone.utc) + timedelta(milliseconds=1)).replace(tzinfo=None)
         
         logger.info(f"Last synced timestamp: {last_ts_ms} ({last_sync_dt} UTC naive)")
 

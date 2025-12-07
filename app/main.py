@@ -47,7 +47,7 @@ async def verify_api_key(key: str = Security(api_key_header)):
 
 app.include_router(embed.router, dependencies=[Security(verify_api_key)])
 app.include_router(chat.router, dependencies=[Security(verify_api_key)])
-app.include_router(semantic.router, dependencies=[Security(verify_api_key)])
+# app.include_router(semantic.router, dependencies=[Security(verify_api_key)])
 
 @app.get("/health")
 def health():
