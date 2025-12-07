@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class ModelConfig(BaseModel):
     repo_id: str
     max_seq_length: int = 1024
+    embedding_dim: int = 1024
     enabled: bool = True
     trust_remote_code: bool = False
     query_instruction_template: str 
@@ -22,6 +23,10 @@ class Settings(BaseSettings):
     # Indices
     chat_index: str = "chat-index"
     semantic_index: str = "semantic-index"
+
+    # Database & Sync
+    database_url: str = Field(alias="DATABASE_URL", default="")
+    sync_interval_minutes: int = Field(alias="SYNC_INTERVAL_MINUTES", default=60)
 
     # Models
     default_model_type: str = "qwen"

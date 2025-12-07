@@ -4,26 +4,32 @@ from pydantic import BaseModel
 class ChatIndexRequest(BaseModel):
     question: str
     answer: str
-    inbox_id: str
     property_id: str
-    user_id: str
-    timestamp: int  # Epoch timestamp
+    message_id: Optional[str] = None
+    host_id: Optional[str] = None
+    guest_id: Optional[str] = None
+    category: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 class ChatSearchRequest(BaseModel):
     query: str
     size: int = 5
-    inbox_id: Optional[str] = None
     property_id: Optional[str] = None
-    user_id: Optional[str] = None
+    host_id: Optional[str] = None
+    guest_id: Optional[str] = None
+    category: Optional[str] = None
     date_from: Optional[str] = None  # YYYY-MM-DD...
     date_to: Optional[str] = None
 
 class ChatSearchResult(BaseModel):
-    text: str
     score: float
     question: str
     answer: str
-    inbox_id: str
     property_id: str
-    user_id: str
-    timestamp: int
+    message_id: Optional[str] = None
+    host_id: Optional[str] = None
+    guest_id: Optional[str] = None
+    category: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None

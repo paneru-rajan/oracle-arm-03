@@ -10,56 +10,50 @@ router = APIRouter(prefix="/chat", tags=["Chat Memory"])
 
 @router.post("/index")
 async def index_chat(req: ChatIndexRequest):
-    # Always use default model
     model_name = settings.default_model_type
-    
-    # Concatenate Question and Answer
     combined_text = f"Q: {req.question}\nA: {req.answer}"
     
-    # Embed
     embeddings = await embedder.embed([combined_text], model_name)
     
     await chat_store.index(
-        text=combined_text,
         vector=embeddings[0],
         question=req.question,
         answer=req.answer,
-        inbox_id=req.inbox_id,
         property_id=req.property_id,
-        user_id=req.user_id,
-        timestamp=req.timestamp
+        message_id=req.message_id,
+        host_id=req.host_id,
+        guest_id=req.guest_id,
+        category=req.category,
+        created_at=req.created_at,
+        updated_at=req.updated_at
     )
-    return {"status": "indexed", "inbox_id": req.inbox_id}
+    return {"status": "indexed", "message_id": req.message_id}
 
 @router.post("/search", response_model=List[ChatSearchResult])
 async def search_chat(req: ChatSearchRequest):
     model_name = settings.default_model_type
     config = settings.models.get(model_name)
     
-    # Embed Query
     prompt = config.query_instruction_template.format(task="Retrieve similar past Q&A")
     embeddings = await embedder.embed([req.query], model_name, prompt=prompt)
     
-    # 1. Exact Match Filters
-    filters = {}
-    if req.inbox_id:
-        filters["inbox_id"] = req.inbox_id
-    if req.property_id:
-        filters["property_id"] = req.property_id
-    if req.user_id:
-        filters["user_id"] = req.user_id
+    filters = {
+        k: v for k, v in {
+            "property_id": req.property_id,
+            "host_id": req.host_id,
+            "guest_id": req.guest_id,
+            "category": req.category
+        }.items() if v
+    }
         
-    # 2. Range Filters (Timestamp)
     range_filters = {}
     if req.date_from or req.date_to:
-        ts_range = {}
+        date_range = {}
         if req.date_from:
-            dt = parser.parse(req.date_from)
-            ts_range["gte"] = int(dt.timestamp() * 1000)
+            date_range["gte"] = parser.parse(req.date_from).isoformat()
         if req.date_to:
-            dt = parser.parse(req.date_to)
-            ts_range["lte"] = int(dt.timestamp() * 1000)
-        range_filters["timestamp"] = ts_range
+            date_range["lte"] = parser.parse(req.date_to).isoformat()
+        range_filters["created_at"] = date_range
     
     results = await chat_store.search(
         vector=embeddings[0],
@@ -68,18 +62,17 @@ async def search_chat(req: ChatSearchRequest):
         range_filters=range_filters
     )
     
-    # Map results
-    mapped_results = []
-    for res in results:
-        mapped_results.append(ChatSearchResult(
-            text=res["text"],
-            score=res["score"],
-            question=res["question"],
-            answer=res["answer"],
-            inbox_id=res["inbox_id"],
-            property_id=res["property_id"],
-            user_id=res["user_id"],
-            timestamp=res["timestamp"]
-        ))
-        
-    return mapped_results
+    return [
+        ChatSearchResult(
+            score=res.get("score", 0.0),
+            question=res.get("question", ""),
+            answer=res.get("answer", ""),
+            property_id=res.get("property_id", ""),
+            message_id=res.get("message_id"),
+            host_id=res.get("host_id"),
+            guest_id=res.get("guest_id"),
+            category=res.get("category"),
+            created_at=res.get("created_at"),
+            updated_at=res.get("updated_at")
+        ) for res in results
+    ]

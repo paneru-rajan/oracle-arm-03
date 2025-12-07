@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
-from elasticsearch import AsyncElasticsearch
+from elasticsearch import AsyncElasticsearch, helpers
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -19,51 +19,95 @@ class BaseVectorStore(ABC):
         await self.client.close()
 
     @abstractmethod
-    async def create_index(self, dim: int = 1024):
+    async def create_index(self, dim: Optional[int] = None):
         pass
 
 class ChatVectorStore(BaseVectorStore):
-    async def create_index(self, dim: int = 1024):
+    async def create_index(self, dim: Optional[int] = None):
+        if dim is None:
+            dim = settings.models[settings.default_model_type].embedding_dim
+
         exists = await self.client.indices.exists(index=self.index_name)
         if not exists:
-            logger.info(f"Creating Chat index: {self.index_name}")
+            logger.info(f"Creating Chat index: {self.index_name} with dim {dim}")
             mapping = {
                 "mappings": {
                     "properties": {
-                        "text": {"type": "text"},
                         "embedding": {
                             "type": "dense_vector",
                             "dims": dim,
                             "index": True,
                             "similarity": "cosine"
                         },
-                        # Strict schema for Chat
-                        "timestamp": {"type": "date", "format": "epoch_millis"},
-                        "inbox_id": {"type": "keyword"},
+                        "message_id": {"type": "keyword"},
+                        "question": {"type": "text", "index": False},
+                        "answer": {"type": "text", "index": False},
+                        "guest_id": {"type": "keyword"},
                         "property_id": {"type": "keyword"},
-                        "user_id": {"type": "keyword"},
-                        "question": {"type": "text"}, # Indexed for text search too?
-                        "answer": {"type": "text"}
+                        "host_id": {"type": "keyword"},
+                        "category": {"type": "keyword"},
+                        "created_at": {"type": "date"},
+                        "updated_at": {"type": "date"}
                     }
                 }
             }
             await self.client.indices.create(index=self.index_name, body=mapping)
+            
+    async def get_latest_timestamp(self) -> int:
+        """
+        Retrieves the latest 'updated_at' timestamp from the index.
+        Returns 0 if the index is empty or doesn't exist.
+        """
+        try:
+            if not await self.client.indices.exists(index=self.index_name):
+                return 0
+                
+            resp = await self.client.search(
+                index=self.index_name,
+                body={
+                    "size": 0,
+                    "aggs": {
+                        "max_timestamp": {"max": {"field": "updated_at"}}
+                    }
+                }
+            )
+            max_ts = resp["aggregations"]["max_timestamp"]["value"]
+            return int(max_ts) if max_ts else 0
+        except Exception as e:
+            logger.error(f"Error fetching latest timestamp: {e}")
+            return 0
 
-    async def index(self, text: str, vector: list, question: str, answer: str, 
-                   inbox_id: str, property_id: str, user_id: str, timestamp: int):
+    async def bulk_index(self, docs: List[Dict[str, Any]]):
+        """
+        Bulk indexes a list of documents.
+        docs: List of dicts containing the document fields.
+        Expected to have '_id' key for specific doc ID.
+        """
+        actions = [
+            {
+                "_index": self.index_name,
+                "_id": doc.pop("_id", None),
+                "_source": doc
+            }
+            for doc in docs
+        ]
+        try:
+            success, failed = await helpers.async_bulk(self.client, actions, refresh=True)
+            logger.info(f"Bulk indexed {success} documents. Failed: {failed}")
+            return success
+        except Exception as e:
+            logger.error(f"Bulk indexing failed: {e}")
+            raise e
+
+    async def index(self, vector: list, question: str, answer: str, **kwargs):
         doc = {
-            "text": text,
             "embedding": vector,
             "question": question,
             "answer": answer,
-            "inbox_id": inbox_id,
-            "property_id": property_id,
-            "user_id": user_id,
-            "timestamp": timestamp
+            **kwargs
         }
-        # ID strategy: Maybe inbox_id + timestamp? Or auto-generate.
-        # Let's auto-generate for now unless user specifies ID requirement for Chat.
-        await self.client.index(index=self.index_name, document=doc)
+        doc_id = kwargs.get("message_id")
+        await self.client.index(index=self.index_name, document=doc, id=doc_id)
 
     async def search(self, vector: list, top_k: int = 5, 
                     filters: Optional[Dict[str, Any]] = None,
@@ -77,13 +121,11 @@ class ChatVectorStore(BaseVectorStore):
 
         filter_clauses = []
 
-        # 1. Exact Match (Filters)
         if filters:
             for key, value in filters.items():
-                # Now we target top-level keyword fields
-                filter_clauses.append({"term": {key: value}})
+                if value is not None:
+                    filter_clauses.append({"term": {key: value}})
         
-        # 2. Range Match (Timestamp)
         if range_filters:
             for key, ranges in range_filters.items():
                 filter_clauses.append({"range": {key: ranges}})
@@ -93,7 +135,7 @@ class ChatVectorStore(BaseVectorStore):
 
         query = {
             "knn": knn_query,
-            "_source": ["text", "question", "answer", "inbox_id", "property_id", "user_id", "timestamp"]
+            "_source": True
         }
         
         resp = await self.client.search(index=self.index_name, body=query)
@@ -101,23 +143,18 @@ class ChatVectorStore(BaseVectorStore):
         results = []
         for hit in resp["hits"]["hits"]:
             source = hit["_source"]
-            results.append({
-                "score": hit["_score"],
-                "text": source.get("text", ""),
-                "question": source.get("question", ""),
-                "answer": source.get("answer", ""),
-                "inbox_id": source.get("inbox_id", ""),
-                "property_id": source.get("property_id", ""),
-                "user_id": source.get("user_id", ""),
-                "timestamp": source.get("timestamp", 0)
-            })
+            source["score"] = hit["_score"]
+            results.append(source)
         return results
 
 class SemanticVectorStore(BaseVectorStore):
-    async def create_index(self, dim: int = 1024):
+    async def create_index(self, dim: Optional[int] = None):
+        if dim is None:
+            dim = settings.models[settings.default_model_type].embedding_dim
+
         exists = await self.client.indices.exists(index=self.index_name)
         if not exists:
-            logger.info(f"Creating Semantic index: {self.index_name}")
+            logger.info(f"Creating Semantic index: {self.index_name} with dim {dim}")
             mapping = {
                 "mappings": {
                     "properties": {
