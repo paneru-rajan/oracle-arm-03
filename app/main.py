@@ -1,8 +1,13 @@
 from contextlib import asynccontextmanager
 import asyncio
+import logging
 from fastapi import FastAPI, Security, HTTPException, status
 from fastapi.security import APIKeyHeader
 from config import settings
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
 from services.embedder import embedder
 from services.vector_store import chat_store, semantic_store
 from services.sync_to_embed import start_scheduler

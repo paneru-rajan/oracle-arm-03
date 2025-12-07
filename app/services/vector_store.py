@@ -135,7 +135,30 @@ class ChatVectorStore(BaseVectorStore):
 
         query = {
             "knn": knn_query,
-            "_source": True
+            "_source": True,
+            "rescore": {
+                "window_size": 50,
+                "query": {
+                    "rescore_query": {
+                        "function_score": {
+                            "score_mode": "multiply",
+                            "functions": [
+                                {
+                                    "gauss": {
+                                        "updated_at": {
+                                            "origin": "now",
+                                            "scale": "30d",
+                                            "decay": 0.5
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "query_weight": 0.7,
+                    "rescore_query_weight": 0.3
+                }
+            }
         }
         
         resp = await self.client.search(index=self.index_name, body=query)

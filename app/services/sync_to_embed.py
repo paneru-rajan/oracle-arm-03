@@ -40,7 +40,7 @@ SYNC_QUERY = """
     LIMIT 1000;
 """
 
-BATCH_SIZE = 50
+BATCH_SIZE = 1 # 
 
 def _ensure_timezone(dt: datetime) -> datetime:
     """Ensure datetime object has timezone information (UTC if missing)."""
@@ -123,7 +123,7 @@ async def start_scheduler():
     Background task that runs the sync job periodically.
     """
     logger.info("Scheduler started. Waiting 5 minutes before first sync...")
-    await asyncio.sleep(300)  # 5 minutes initial delay
+    await asyncio.sleep(1)  # 5 minutes initial delay
     
     while True:
         try:
