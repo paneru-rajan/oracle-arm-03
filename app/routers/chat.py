@@ -29,7 +29,7 @@ async def index_chat(req: ChatIndexRequest):
     )
     return {"status": "indexed", "message_id": req.message_id}
 
-@router.post("/search", response_model=List[ChatSearchResult], response_model_exclude={"created_at", "guest_id", "host_id", "message_id", "property_id"})
+@router.post("/search", response_model=List[ChatSearchResult])
 async def search_chat(req: ChatSearchRequest):
     model_name = settings.default_model_type
     config = settings.models.get(model_name)
