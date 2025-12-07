@@ -2,11 +2,11 @@ from contextlib import asynccontextmanager
 import asyncio
 from fastapi import FastAPI, Security, HTTPException, status
 from fastapi.security import APIKeyHeader
-from app.config import settings
-from app.services.embedder import embedder
-from app.services.vector_store import chat_store, semantic_store
-from app.services.sync_to_embed import start_scheduler
-from app.routers import embed, chat, semantic
+from config import settings
+from services.embedder import embedder
+from services.vector_store import chat_store, semantic_store
+from services.sync_to_embed import start_scheduler
+from routers import embed, chat, semantic
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

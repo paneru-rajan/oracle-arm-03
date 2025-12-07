@@ -2,7 +2,7 @@ import logging
 from typing import List, Optional
 from sentence_transformers import SentenceTransformer
 from fastapi.concurrency import run_in_threadpool
-from app.config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 

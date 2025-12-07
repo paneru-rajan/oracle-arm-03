@@ -5,9 +5,9 @@ from typing import List, Dict, Any
 
 import asyncpg
 
-from app.config import settings
-from app.services.embedder import embedder
-from app.services.vector_store import chat_store
+from config import settings
+from services.embedder import embedder
+from services.vector_store import chat_store
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +60,10 @@ async def sync_chat_data():
 
     try:
         last_ts_ms = await chat_store.get_latest_timestamp()
-        last_sync_dt = datetime.fromtimestamp(last_ts_ms / 1000.0, tz=timezone.utc)
+        # Convert to UTC aware then strip tzinfo to match Postgres timestamp without time zone
+        last_sync_dt = datetime.fromtimestamp(last_ts_ms / 1000.0, tz=timezone.utc).replace(tzinfo=None)
         
-        logger.info(f"Last synced timestamp: {last_ts_ms} ({last_sync_dt})")
+        logger.info(f"Last synced timestamp: {last_ts_ms} ({last_sync_dt} UTC naive)")
 
         conn = await asyncpg.connect(settings.database_url)
 
@@ -121,6 +122,9 @@ async def start_scheduler():
     """
     Background task that runs the sync job periodically.
     """
+    logger.info("Scheduler started. Waiting 5 minutes before first sync...")
+    await asyncio.sleep(300)  # 5 minutes initial delay
+    
     while True:
         try:
             await sync_chat_data()

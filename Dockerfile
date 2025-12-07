@@ -1,16 +1,12 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# Set working directory
-WORKDIR /app
+WORKDIR /home
+COPY uv.lock pyproject.toml ./
+RUN uv sync
 
-# Copy dependency definitions
-COPY pyproject.toml .
+COPY . /home
 
-# Install dependencies
-RUN uv sync --frozen --no-install-project || uv sync --no-install-project
+ENV PYTHONPATH=/home/app
+WORKDIR /home/app
 
-# Copy the application code
-COPY app ./app
-
-# Run the application
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,9 +1,9 @@
 from typing import List
 from fastapi import APIRouter
-from app.schemas.chat import ChatIndexRequest, ChatSearchRequest, ChatSearchResult
-from app.services.embedder import embedder
-from app.services.vector_store import chat_store
-from app.config import settings
+from schemas.chat import ChatIndexRequest, ChatSearchRequest, ChatSearchResult
+from services.embedder import embedder
+from services.vector_store import chat_store
+from config import settings
 from dateutil import parser
 
 router = APIRouter(prefix="/chat", tags=["Chat Memory"])

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from app.schemas.common import EmbedRequest, EmbedResponse
-from app.services.embedder import embedder
-from app.config import settings
+from schemas.common import EmbedRequest, EmbedResponse
+from services.embedder import embedder
+from config import settings
 
 router = APIRouter(tags=["Embedding"])
 

@@ -1,9 +1,9 @@
 from typing import List
 from fastapi import APIRouter
-from app.schemas.article import SemanticIndexRequest, SemanticSearchRequest, SemanticSearchResult
-from app.services.embedder import embedder
-from app.services.vector_store import semantic_store
-from app.config import settings
+from schemas.article import SemanticIndexRequest, SemanticSearchRequest, SemanticSearchResult
+from services.embedder import embedder
+from services.vector_store import semantic_store
+from config import settings
 from dateutil import parser
 
 router = APIRouter(prefix="/semantic", tags=["Semantic Search"])

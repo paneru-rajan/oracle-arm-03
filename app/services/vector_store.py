@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import List, Optional, Dict, Any
 from elasticsearch import AsyncElasticsearch, helpers
-from app.config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 
