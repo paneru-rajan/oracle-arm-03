@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 from pydantic import BaseModel, model_validator, SecretStr, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -7,15 +7,24 @@ class ModelConfig(BaseModel):
     max_seq_length: int = 1024
     enabled: bool = True
     trust_remote_code: bool = False
-    # Template for the prompt argument. 
-    # The sentence-transformer will prepend this string to the input text.
     query_instruction_template: str 
     default_task: str = "Given a web search query, retrieve relevant passages that answer the query"
 
 class Settings(BaseSettings):
-    default_model_type: str = "qwen"
+    # Security
     api_key: SecretStr = Field(alias="API_KEY")
     
+    # ElasticSearch
+    es_host: str = Field(default="http://es:9200", alias="ELASTICSEARCH_HOST")
+    es_username: str = Field(default="elastic", alias="ELASTICSEARCH_USERNAME")
+    es_password: str = Field(default="changeme", alias="ELASTIC_PASSWORD")
+    
+    # Indices
+    chat_index: str = "chat-index"
+    semantic_index: str = "semantic-index"
+
+    # Models
+    default_model_type: str = "qwen"
     models: Dict[str, ModelConfig] = {
         "qwen": ModelConfig(
             repo_id="Qwen/Qwen3-Embedding-0.6B",

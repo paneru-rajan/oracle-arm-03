@@ -10,7 +10,7 @@ COPY pyproject.toml .
 RUN uv sync --frozen --no-install-project || uv sync --no-install-project
 
 # Copy the application code
-COPY embed ./embed
+COPY app ./app
 
 # Run the application
-CMD ["uv", "run", "uvicorn", "embed.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
