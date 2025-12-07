@@ -74,5 +74,5 @@ async def search_chat(req: ChatSearchRequest):
             category=res.get("category"),
             created_at=res.get("created_at"),
             updated_at=res.get("updated_at")
-        ) for res in results
+        ) for res in results if res.get("score", 0.0) >= settings.min_relevance_score
     ]

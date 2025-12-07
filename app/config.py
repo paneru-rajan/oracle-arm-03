@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Database & Sync
     database_url: str = Field(alias="DATABASE_URL", default="")
     sync_interval_minutes: int = Field(alias="SYNC_INTERVAL_MINUTES", default=60)
+    
+    # Search
+    min_relevance_score: float = Field(alias="MIN_RELEVANCE_SCORE", default=0.5)
 
     # Models
     default_model_type: str = "qwen"
