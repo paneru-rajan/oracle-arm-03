@@ -129,27 +129,27 @@ class SemanticVectorStore(BaseVectorStore):
                             "similarity": "cosine"
                         },
                         "timestamp": {"type": "date", "format": "epoch_millis"}, 
-                        "alias": {"type": "keyword"},
+                        "id": {"type": "keyword"},
                         "chunk_id": {"type": "integer"},
                         "tag": {"type": "keyword"},
-                        "content_type": {"type": "keyword"}
+                        "type": {"type": "keyword"}
                     }
                 }
             }
             await self.client.indices.create(index=self.index_name, body=mapping)
 
-    async def index(self, chunk: str, vector: list, alias: str, chunk_id: int, 
-                   timestamp: int, tag: List[str], content_type: str):
+    async def index(self, chunk: str, vector: list, id: str, chunk_id: int, 
+                   timestamp: int, tag: List[str], type: str):
         
-        doc_id = f"{alias}_{chunk_id}"
+        doc_id = f"{id}_{chunk_id}"
         doc = {
             "text": chunk,
             "embedding": vector,
-            "alias": alias,
+            "id": id,
             "chunk_id": chunk_id,
             "timestamp": timestamp,
             "tag": tag,
-            "content_type": content_type
+            "type": type
         }
         await self.client.index(index=self.index_name, document=doc, id=doc_id)
 
@@ -179,7 +179,7 @@ class SemanticVectorStore(BaseVectorStore):
         if filter_clauses:
              knn_query["filter"] = filter_clauses if len(filter_clauses) > 1 else filter_clauses[0]
 
-        fields = ["text", "alias", "chunk_id", "timestamp", "tag", "content_type"]
+        fields = ["text", "id", "chunk_id", "timestamp", "tag", "type"]
         if include_embeddings:
             fields.append("embedding")
 
@@ -196,11 +196,11 @@ class SemanticVectorStore(BaseVectorStore):
             results.append({
                 "score": hit["_score"],
                 "text": source.get("text", ""),
-                "alias": source.get("alias"),
+                "id": source.get("id"),
                 "chunk_id": source.get("chunk_id"),
                 "timestamp": source.get("timestamp"),
                 "tag": source.get("tag", []),
-                "content_type": source.get("content_type"),
+                "type": source.get("type"),
                 "embedding": source.get("embedding") if include_embeddings else None
             })
         return results

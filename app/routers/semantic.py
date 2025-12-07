@@ -18,13 +18,13 @@ async def index_semantic(req: SemanticIndexRequest):
     await semantic_store.index(
         chunk=req.chunk,
         vector=embeddings[0],
-        alias=req.alias,
+        id=req.id,
         chunk_id=req.chunk_id,
         timestamp=req.timestamp,
         tag=req.tag,
-        content_type=req.content_type
+        type=req.type
     )
-    return {"status": "indexed", "id": f"{req.alias}_{req.chunk_id}"}
+    return {"status": "indexed", "id": f"{req.id}_{req.chunk_id}"}
 
 @router.post("/search", response_model=List[SemanticSearchResult])
 async def search_semantic(req: SemanticSearchRequest):
@@ -51,10 +51,10 @@ async def search_semantic(req: SemanticSearchRequest):
     terms_filters = {}
     if req.tags:
         terms_filters["tag"] = req.tags
-    if req.content_types:
-        terms_filters["content_type"] = req.content_types
-    if req.aliases:
-        terms_filters["alias"] = req.aliases
+    if req.types:
+        terms_filters["type"] = req.types
+    if req.ids:
+        terms_filters["id"] = req.ids
         
     results = await semantic_store.search(
         vector=embeddings[0],
@@ -69,11 +69,11 @@ async def search_semantic(req: SemanticSearchRequest):
         mapped_results.append(SemanticSearchResult(
             chunk=res["text"],
             score=res["score"],
-            alias=res["alias"],
+            id=res["id"],
             chunk_id=res["chunk_id"],
             timestamp=res["timestamp"],
             tag=res["tag"],
-            content_type=res["content_type"],
+            type=res["type"],
             embedding=res["embedding"]
         ))
         

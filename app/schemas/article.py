@@ -3,11 +3,11 @@ from pydantic import BaseModel
 
 class SemanticIndexRequest(BaseModel):
     chunk: str
-    alias: str
+    id: str
     timestamp: int  # Epoch timestamp
     chunk_id: int
     tag: List[str]
-    content_type: str
+    type: str
 
 class SemanticSearchRequest(BaseModel):
     query: str
@@ -15,16 +15,16 @@ class SemanticSearchRequest(BaseModel):
     date_from: Optional[str] = None  # YYYY-MM-DD HH:MM:SS
     date_to: Optional[str] = None    # YYYY-MM-DD HH:MM:SS
     tags: Optional[List[str]] = None
-    content_types: Optional[List[str]] = None
-    aliases: Optional[List[str]] = None
+    types: Optional[List[str]] = None
+    ids: Optional[List[str]] = None
     include_embeddings: bool = False
 
 class SemanticSearchResult(BaseModel):
     chunk: str
     score: float
-    alias: str
+    id: str
     chunk_id: int
     timestamp: int
     tag: List[str]
-    content_type: str
+    type: str
     embedding: Optional[List[float]] = None
