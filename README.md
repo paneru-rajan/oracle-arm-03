@@ -42,3 +42,15 @@ Content-Type: application/json
   "password": "changeme"
 }
 ```
+
+
+```shell
+# Allow Ollama
+sudo firewall-cmd --permanent --add-port=11434/tcp
+
+# Allow your other application
+sudo firewall-cmd --permanent --add-port=8000/tcp
+
+# Reload to apply changes immediately
+sudo firewall-cmd --reload
+```
